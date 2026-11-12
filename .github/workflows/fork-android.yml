@@ -1,0 +1,99 @@
+# Fork-only workflow (MelodyJayai/hiddify-app). Builds the Android APKs of this fork, signs them with the
+# fork's own key and keeps them as a workflow artifact. It publishes no release and uploads nothing to
+# any store. The upstream workflows are left untouched; see FORK_NOTES.md.
+name: Fork - Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: prod = core libraries of the released core.version, dev = the core's draft release
+        type: choice
+        options: [prod, dev]
+        default: prod
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CHANNEL: ${{ inputs.channel }}
+
+jobs:
+  apk:
+    name: apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Set up the Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: platform-tools
+
+      - uses: ./.github/actions/setup-flutter
+        with:
+          platform: android-apk
+
+      - name: Set up the signing key
+        env:
+          SIGNING_KEY: ${{ secrets.ANDROID_SIGNING_KEY }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+        run: |
+          # an unsigned or debug-signed APK cannot be upgraded in place later, so a missing key is an error
+          if [ -z "$SIGNING_KEY" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ]; then
+            echo "::error::the ANDROID_SIGNING_* secrets of this fork are not set"
+            exit 1
+          fi
+          echo "$SIGNING_KEY" | base64 --decode > android/key.jks
+          printf '%s=%s\n' \
+            storeFile "$PWD/android/key.jks" \
+            storePassword "$STORE_PASSWORD" \
+            keyPassword "$KEY_PASSWORD" \
+            keyAlias "$KEY_ALIAS" > android/key.properties
+
+      - name: Build
+        run: make android-apk-release
+
+      - name: Collect the APKs
+        run: |
+          mkdir out
+          apk=build/app/outputs/flutter-apk
+          ls -l $apk
+          cp $apk/*arm64-v8a*.apk out/Hiddify-fork-Android-arm64.apk
+          cp $apk/*armeabi-v7a*.apk out/Hiddify-fork-Android-arm7.apk || echo "no arm7 apk"
+          cp $apk/app-release.apk out/Hiddify-fork-Android-universal.apk || echo "no universal apk"
+          (cd out && sha256sum *.apk | tee SHA256SUMS)
+          # which certificate signed it (must be the fork's key, not the debug key)
+          apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n 1)
+          "$apksigner" verify --print-certs out/Hiddify-fork-Android-arm64.apk | grep -i -E "SHA-256|DN" | tee out/SIGNER.txt
+          if grep -q -i "CN=Android Debug" out/SIGNER.txt; then
+            echo "::error::the APK is signed with the debug key"
+            exit 1
+          fi
+
+      - name: Upload the artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: android-apk
+          path: out
+          retention-days: 30
+          compression-level: 0
+          if-no-files-found: error
