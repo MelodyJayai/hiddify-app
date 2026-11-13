@@ -1,7 +1,7 @@
 name: hiddify
 description: Cross Platform Multi Protocol Proxy Frontend.
 publish_to: "none"
-version: 5.5.6+50506
+version: 5.9.0+50900
 
 environment:
   sdk: ^3.10.4
@@ -196,12 +196,16 @@ flutter_gen:
   integrations:
     flutter_svg: true
 
+# Android: LaunchTheme and NormalTheme show res/drawable/splash_window.xml (the logo on
+# @color/splash_background) until Flutter's first frame; keep it there when regenerating.
 flutter_native_splash:
-  color: "#ffffff"
+  color: "#FBF8FF"
+  color_dark: "#121318"
   image: assets/images/source/ic_launcher_splash.png
   android_gravity: center
   android_12:
-    color: "#ffffff"
+    color: "#FBF8FF"
+    color_dark: "#121318"
     image: assets/images/source/ic_launcher_foreground.png
 
 ffigen:

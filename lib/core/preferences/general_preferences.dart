@@ -54,6 +54,10 @@ abstract class Preferences {
 
   static final windowMaximized = PreferencesNotifier.create<bool, bool>("window_maximized", false);
 
+  /// Whether the proxy list shows the sleeping proxies keep top leaves at rest: open at first, then as the
+  /// user left it.
+  static final showSleepingProxies = PreferencesNotifier.create<bool, bool>("show_sleeping_proxies", true);
+
   /// The newest crash report the user was offered, by name, so each crash is offered once.
   static final lastSeenCrashReport = PreferencesNotifier.create<String, String>("last_seen_crash_report", "");
 
@@ -85,8 +89,9 @@ abstract class Preferences {
 
   static final disableMemoryLimit = PreferencesNotifier.create<bool, bool>(
     "disable_memory_limit",
-    // disable memory limit on desktop by default
-    PlatformUtils.isDesktop,
+    // only iOS needs the limit (the Network Extension is killed above its memory cap); elsewhere
+    // a Go limit makes the GC run all the time near it, and the connection lags (hiddify-app#2521)
+    !PlatformUtils.isIOS,
   );
 
   // iOS only: kept in step with the native side, which applies it (see VPNManager.setAlwaysOn).
