@@ -6,8 +6,11 @@ abstract class Constants {
   static const appName = "Hiddify";
   static const githubUrl = "https://github.com/hiddify/hiddify-next";
   static const licenseUrl = "https://github.com/hiddify/hiddify-next?tab=License-1-ov-file#readme";
-  static const githubReleasesApiUrl = "https://api.github.com/repos/hiddify/hiddify-app/releases";
-  static const githubLatestReleaseUrl = "https://github.com/hiddify/hiddify-app/releases/latest";
+  // Fork (MelodyJayai/hiddify-app): this build is signed with the fork's own key, so Android refuses to
+  // install an upstream APK over it. The update check and the "latest release" link therefore look at the
+  // fork's releases, not upstream's. See FORK_NOTES.md.
+  static const githubReleasesApiUrl = "https://api.github.com/repos/MelodyJayai/hiddify-app/releases";
+  static const githubLatestReleaseUrl = "https://github.com/MelodyJayai/hiddify-app/releases/latest";
   static const telegramChannelUrl = "https://t.me/hiddify";
   static const bugReportEmail = "bug@hiddify.com";
   static const bugReportTelegramUrl = "https://t.me/hiddify_board";
