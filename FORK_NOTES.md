@@ -15,11 +15,14 @@ app store and no GitHub release is made from this fork.
 
 | Date | Change |
 |---|---|
-| 2026-11-12 | Added `.github/workflows/fork-android.yml`: a manually started GitHub Actions workflow that builds the Android APKs, signs them with this fork's own key and keeps them as a workflow artifact. No application code is changed. |
+| 2026-11-12 | Added `.github/workflows/fork-android.yml`: a manually started GitHub Actions workflow that builds the Android APKs, signs them with this fork's own key and keeps them as a workflow artifact. |
 | 2026-11-12 | Added this file and a pointer to it at the top of `README.md`. |
+| 2026-11-13 | Merged upstream `main` (5.9.0). |
+| 2026-11-13 | `lib/core/model/constants.dart`: the in-app update check (`githubReleasesApiUrl`) and the "latest release" link (`githubLatestReleaseUrl`) point to this fork instead of upstream. A fork build is signed with the fork's key, so the upstream APK the app offered ("update to 5.9.0") was downloaded and then rejected by Android's installer. This fork publishes no releases, so the app now offers no update; a new build is installed by hand over the old one. |
 
-Application code, name, package id and UI are unchanged from upstream at this point. Any later change to the
-application or to the core (`hiddify-core`, forked at `MelodyJayai/hiddify-core`) will be listed in the table above.
+Apart from the two addresses listed above, application code, name, package id and UI are unchanged from
+upstream. Any later change to the application or to the core (`hiddify-core`, forked at
+`MelodyJayai/hiddify-core`) will be listed in the table above.
 
 ## Builds
 
